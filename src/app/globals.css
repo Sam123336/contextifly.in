@@ -1,26 +1,250 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Contextifly — design system
+   Dark, electric, developer-grade. Deliberately the opposite of
+   the light knowledge-graph tools it competes with.
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #05060b;
+  --bg-2: #080a13;
+  --bg-3: #0b0e1a;
+
+  --panel: rgba(255, 255, 255, 0.024);
+  --panel-2: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --text: #eceefb;
+  --muted: #9096b0;
+  --faint: #6a6f89;
+
+  --blue: #4d7cff;
+  --violet: #9a5bff;
+  --cyan: #29e0d4;
+  --amber: #f5a524;
+  --pink: #ff5d9e;
+  --green: #34e39b;
+
+  --brand: linear-gradient(120deg, #4d7cff 0%, #9a5bff 52%, #29e0d4 100%);
+  --brand-soft: linear-gradient(120deg, rgba(77, 124, 255, 0.16), rgba(154, 91, 255, 0.16));
+
+  --shadow-glow: 0 0 0 1px rgba(77, 124, 255, 0.25), 0 20px 60px -20px rgba(77, 124, 255, 0.45);
+
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-blue: var(--blue);
+  --color-violet: var(--violet);
+  --color-cyan: var(--cyan);
+  --color-amber: var(--amber);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(1100px 700px at 12% -8%, rgba(77, 124, 255, 0.13), transparent 60%),
+    radial-gradient(1000px 720px at 92% 4%, rgba(154, 91, 255, 0.12), transparent 62%),
+    radial-gradient(900px 900px at 50% 118%, rgba(41, 224, 212, 0.08), transparent 60%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(77, 124, 255, 0.32);
+  color: #fff;
+}
+
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--blue), var(--violet));
+  border-radius: 999px;
+  border: 3px solid var(--bg);
+}
+
+/* ---------- primitives ---------- */
+
+.container-x { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: 24px; }
+
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 78%);
+  pointer-events: none;
+}
+
+.glass {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  backdrop-filter: blur(14px);
+}
+
+.glass-strong {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  backdrop-filter: blur(16px);
+}
+
+.gradient-text {
+  background: var(--brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-text-static {
+  background: linear-gradient(120deg, #7aa0ff, #c39bff 60%, #5ef0e4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 15px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b9c1e8;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.eyebrow .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 12px 2px var(--cyan);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 12px 22px;
+  font-weight: 600; font-size: 15px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.25s ease, background 0.25s ease;
+  white-space: nowrap;
+}
+.btn-primary {
+  color: #fff;
+  background: var(--brand);
+  background-size: 160% 160%;
+  box-shadow: 0 10px 34px -10px rgba(77, 124, 255, 0.7);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 44px -10px rgba(122, 91, 255, 0.85); background-position: 100% 50%; }
+.btn-ghost {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-strong);
+}
+.btn-ghost:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.08); }
+
+.section-title {
+  font-size: clamp(30px, 4.4vw, 52px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+}
+
+.card-hover { transition: transform 0.3s cubic-bezier(.2,.7,.2,1), border-color 0.3s, background 0.3s; }
+.card-hover:hover { transform: translateY(-4px); border-color: var(--border-strong); background: var(--panel-2); }
+
+.mono { font-family: var(--font-mono); }
+
+.divider-glow {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(122,91,255,0.5), transparent);
+}
+
+.reveal { opacity: 0; transform: translateY(26px); }
+
+.conic-ring { position: relative; }
+.conic-ring::before {
+  content: "";
+  position: absolute; inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--angle, 0deg), transparent 60%, var(--blue), var(--violet), var(--cyan), transparent 85%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: spin-ring 6s linear infinite;
+}
+@property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes spin-ring { to { --angle: 360deg; } }
+
+.marquee-track { display: flex; gap: 48px; width: max-content; animation: marquee 26s linear infinite; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* Ticker-stall safety net: if rAF never advances, never leave content hidden. */
+.gsap-stalled .hero-eyebrow,
+.gsap-stalled .hero-word,
+.gsap-stalled .hero-sub,
+.gsap-stalled .hero-term,
+.gsap-stalled .hero-cta,
+.gsap-stalled .hero-stat,
+.gsap-stalled .hero-badge-float,
+.gsap-stalled [data-r],
+.gsap-stalled .compare-reveal,
+.gsap-stalled .pipe-step,
+.gsap-stalled .metric-card,
+.gsap-stalled .trace-step,
+.gsap-stalled .gnode,
+.gsap-stalled .prov,
+.gsap-stalled .god-ring,
+.gsap-stalled .fuzzy-mark {
+  opacity: 1 !important;
+  transform: none !important;
+}
+.gsap-stalled .edge,
+.gsap-stalled .trace-path {
+  opacity: 1 !important;
+  stroke-dashoffset: 0 !important;
+}
+.gsap-stalled .pipe-progress,
+.gsap-stalled .trace-line-fill {
+  transform: none !important;
 }
