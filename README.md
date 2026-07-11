@@ -30,10 +30,10 @@ e-commerce app twice and races two engines against each other with GSAP:
 | | LLM-extracted (Graphify-style) | Contextifly (compiler) |
 |---|---|---|
 | Build | streams in slowly, ~42s | snaps in, ~1.9s |
-| Cost | ~123k tokens | ~380 tokens |
+| Cost | ~60k tokens | ~380 tokens |
 | Edges | dashed `~?` uncertain links, a “god node” | solid, exact |
+| Graph | call-graph + concept clusters | framework-aware full-stack |
 | Trace | — | glowing full-stack path with `file:line` |
-| Privacy | code leaves the machine | 100% local |
 
 It auto-plays when scrolled into view (ScrollTrigger) and can be replayed.
 

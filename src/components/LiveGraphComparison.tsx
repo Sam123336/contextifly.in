@@ -6,15 +6,21 @@ import {
   GRAPH_NODES,
   GRAPH_EDGES,
   TRACE_PATH,
+  LLM_NODES,
+  LLM_EDGES,
   KIND_COLOR,
   KIND_LABEL,
   type GNode,
   type GNodeKind,
 } from "@/lib/content";
 
-const nodeById: Record<string, GNode> = {};
+const ctxNodeById: Record<string, GNode> = {};
 GRAPH_NODES.forEach((n) => {
-  nodeById[n.id] = n;
+  ctxNodeById[n.id] = n;
+});
+const llmNodeById: Record<string, GNode> = {};
+LLM_NODES.forEach((n) => {
+  llmNodeById[n.id] = n;
 });
 const traceSet = new Set(TRACE_PATH);
 const tracePairs = new Set(
@@ -23,11 +29,14 @@ const tracePairs = new Set(
 const chipW = (label: string) => Math.max(34, label.length * 6.4 + 22);
 const traceD =
   "M " +
-  TRACE_PATH.map((id) => `${nodeById[id].x} ${nodeById[id].y}`).join(" L ");
+  TRACE_PATH.map((id) => `${ctxNodeById[id].x} ${ctxNodeById[id].y}`).join(" L ");
 
 /** One graph figure. Pure markup — never depends on React state so GSAP owns it. */
 function GraphFigure({ variant }: { variant: "ctx" | "llm" }) {
   const isCtx = variant === "ctx";
+  const nodes = isCtx ? GRAPH_NODES : LLM_NODES;
+  const edges = isCtx ? GRAPH_EDGES : LLM_EDGES;
+  const nodeById = isCtx ? ctxNodeById : llmNodeById;
   return (
     <svg viewBox="0 0 460 336" className="w-full" role="img" aria-label="knowledge graph">
       <defs>
@@ -47,7 +56,7 @@ function GraphFigure({ variant }: { variant: "ctx" | "llm" }) {
 
       {/* edges */}
       <g>
-        {GRAPH_EDGES.map((e) => {
+        {edges.map((e) => {
           const a = nodeById[e.from];
           const b = nodeById[e.to];
           const onTrace = isCtx && tracePairs.has(`${e.from}->${e.to}`);
@@ -93,7 +102,7 @@ function GraphFigure({ variant }: { variant: "ctx" | "llm" }) {
 
       {/* nodes */}
       <g>
-        {GRAPH_NODES.map((n) => {
+        {nodes.map((n) => {
           const color = KIND_COLOR[n.kind as GNodeKind];
           const w = chipW(n.label);
           const onTrace = isCtx && traceSet.has(n.id);
@@ -141,7 +150,7 @@ function GraphFigure({ variant }: { variant: "ctx" | "llm" }) {
 
       {/* provenance tags (ctx only, trace nodes) OR fuzzy marks (llm) */}
       {isCtx
-        ? GRAPH_NODES.filter((n) => traceSet.has(n.id)).map((n) => (
+        ? nodes.filter((n) => traceSet.has(n.id)).map((n) => (
             <text
               key={`prov-${n.id}`}
               className="prov"
@@ -156,7 +165,7 @@ function GraphFigure({ variant }: { variant: "ctx" | "llm" }) {
               {n.prov}
             </text>
           ))
-        : GRAPH_EDGES.filter((e) => e.fuzzy).map((e) => {
+        : edges.filter((e) => e.fuzzy).map((e) => {
             const a = nodeById[e.from];
             const b = nodeById[e.to];
             return (
@@ -175,6 +184,27 @@ function GraphFigure({ variant }: { variant: "ctx" | "llm" }) {
               </text>
             );
           })}
+
+      {/* the LLM view is split into two islands — label the gap the guesses span */}
+      {!isCtx && (
+        <>
+          <line
+            x1="220"
+            y1="30"
+            x2="220"
+            y2="316"
+            stroke="rgba(150,165,220,0.14)"
+            strokeWidth="1"
+            strokeDasharray="2 6"
+          />
+          <text x="104" y="20" textAnchor="middle" fontSize="8" fontFamily="var(--font-mono)" fill="#7b83a6" style={{ letterSpacing: "1.5px" }}>
+            FRONTEND
+          </text>
+          <text x="356" y="20" textAnchor="middle" fontSize="8" fontFamily="var(--font-mono)" fill="#7b83a6" style={{ letterSpacing: "1.5px" }}>
+            BACKEND
+          </text>
+        </>
+      )}
     </svg>
   );
 }
@@ -224,7 +254,7 @@ export default function LiveGraphComparison() {
 
         // ---------- Contextifly: fast, crisp, deterministic ----------
         const ctx = gsap.timeline();
-        ctx.call(() => set(ctxStat.current, "parsing locally · ts-morph"), undefined, 0)
+        ctx.call(() => set(ctxStat.current, "parsing AST · ts-morph"), undefined, 0)
           .to(".ctx-scope .edge", { opacity: 0.55, duration: 0.01 }, 0.05)
           .to(
             ".ctx-scope .edge",
@@ -252,7 +282,7 @@ export default function LiveGraphComparison() {
             1.05
           )
           .call(
-            () => set(ctxStat.current, "✓ built · deterministic · 100% local"),
+            () => set(ctxStat.current, "✓ built · framework-aware full-stack"),
             undefined,
             1.75
           )
@@ -273,23 +303,23 @@ export default function LiveGraphComparison() {
 
         // ---------- LLM tool: slow, fuzzy, cloud ----------
         const llm = gsap.timeline();
-        llm.call(() => set(llmStat.current, "uploading context to model ☁"), undefined, 0)
+        llm.call(() => set(llmStat.current, "parsing AST · Tree-sitter"), undefined, 0)
           .to(
             ".llm-scope .gnode",
             { opacity: 1, scale: 1, duration: 0.5, stagger: 0.33, ease: "power2.out" },
             0.35
           )
-          .call(() => set(llmStat.current, "streaming nodes from model…"), undefined, 1.1)
+          .call(() => set(llmStat.current, "LLM extracting concepts…"), undefined, 1.1)
           .to(
             ".llm-scope .edge",
             { opacity: 0.5, strokeDashoffset: 0, duration: 0.6, stagger: 0.26, ease: "power1.inOut" },
             0.9
           )
           .to(".llm-scope .god-ring", { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, 3.1)
-          .call(() => set(llmStat.current, "resolving uncertain links…"), undefined, 3.3)
+          .call(() => set(llmStat.current, "clustering communities (Leiden)…"), undefined, 3.3)
           .to(".llm-scope .fuzzy-mark", { opacity: 1, duration: 0.4, stagger: 0.25 }, 3.5)
           .call(
-            () => set(llmStat.current, "✓ built · probabilistic · code left machine"),
+            () => set(llmStat.current, "✓ built · communities + concepts"),
             undefined,
             4.55
           );
@@ -297,7 +327,7 @@ export default function LiveGraphComparison() {
         const lo = { t: 0, k: 0 };
         const llmCount = gsap.to(lo, {
           t: 42.4,
-          k: 123000,
+          k: 60000,
           duration: 4.6,
           ease: "power1.inOut",
           onUpdate: () => {
@@ -332,6 +362,19 @@ export default function LiveGraphComparison() {
         once: true,
         onEnter: () => run(),
       });
+
+      // the hero "Watch it build — live" CTA replays the animation on demand;
+      // small delay lets the scroll-to-#compare settle so it plays from the top
+      let replayTimer: number | undefined;
+      const onReplay = () => {
+        window.clearTimeout(replayTimer);
+        replayTimer = window.setTimeout(run, 480);
+      };
+      window.addEventListener("ctx:replay-compare", onReplay);
+      return () => {
+        window.clearTimeout(replayTimer);
+        window.removeEventListener("ctx:replay-compare", onReplay);
+      };
     },
     { scope: root }
   );
@@ -350,10 +393,10 @@ export default function LiveGraphComparison() {
             Same repo. Two engines. <span className="gradient-text">Watch them build.</span>
           </h2>
           <p className="compare-reveal mx-auto mt-5 max-w-[64ch] text-[17px] leading-relaxed text-[var(--muted)]">
-            Point both at the same e-commerce app. LLM-extracted tools ship your context to a model
-            and stream back a <em>probabilistic</em> graph. Contextifly compiles it locally into an{" "}
-            <span className="text-[var(--text)]">exact</span> one — and traces the full stack, front to
-            back, with the file:line to prove it.
+            Point both at the same e-commerce app. Both start from the AST — then split. An
+            LLM-extracted tool clusters your code into <em>topic communities</em> + concepts. Contextifly
+            keeps compiling: it links the front-end call → API route → service → entity into one{" "}
+            <span className="text-[var(--text)]">full-stack</span> trace, with the file:line to prove it.
           </p>
 
           <div className="compare-reveal mt-8 flex items-center justify-center gap-3">
@@ -379,10 +422,10 @@ export default function LiveGraphComparison() {
           <div className="llm-scope glass overflow-hidden">
             <PanelHeader
               accent="#f5a524"
-              icon="cloud"
+              icon="nodes"
               title="LLM-extracted graph"
-              sub="e.g. Graphify-style · Tree-sitter + model"
-              chip="cloud · probabilistic"
+              sub="e.g. Graphify-style · Tree-sitter + LLM"
+              chip="communities + concepts"
             />
             <div className="relative px-4 pt-1">
               <div className="grid-overlay opacity-40!" />
@@ -395,21 +438,21 @@ export default function LiveGraphComparison() {
               statRef={llmStat}
               barRef={llmBar}
               defaultStat="idle — press run"
-              badges={["code leaves machine", "no provenance"]}
+              badges={["topic communities", "no route identity"]}
             />
           </div>
 
           {/* Contextifly panel */}
           <div className="ctx-scope glass-strong relative overflow-hidden conic-ring">
             <div className="ctx-done-badge absolute right-4 top-16 z-10 rounded-full border border-[var(--border-strong)] bg-[#0a0d17] px-3 py-1.5 text-[12px] font-semibold" style={{ color: "var(--green)", opacity: 0 }}>
-              ✓ done · ~22× faster
+              ✓ done · full-stack linked
             </div>
             <PanelHeader
               accent="#4d7cff"
               icon="chip"
               title="Contextifly compiler"
               sub="TypeScript & AST parsers · on your machine"
-              chip="local · deterministic"
+              chip="wiring · deterministic"
               featured
             />
             <div className="relative px-4 pt-1">
@@ -423,7 +466,7 @@ export default function LiveGraphComparison() {
               statRef={ctxStat}
               barRef={ctxBar}
               defaultStat="idle — press run"
-              badges={["code never leaves", "file:line provenance"]}
+              badges={["routes → services → entities", "file:line provenance"]}
               featured
             />
           </div>
@@ -448,11 +491,11 @@ export default function LiveGraphComparison() {
 
         <div className="verdict mx-auto mt-8 max-w-[720px] glass px-6 py-5 text-center" style={{ opacity: 0 }}>
           <p className="text-[15px] leading-relaxed text-[var(--muted)]">
-            <span className="font-semibold text-[var(--text)]">Same answer, different trust.</span>{" "}
-            Contextifly finished in <b style={{ color: "var(--green)" }}>~1.9s / ~380 tokens</b> with an
-            exact, cited full-stack trace — while the LLM route spent{" "}
-            <b style={{ color: "var(--amber)" }}>~42s / ~123k tokens</b>, shipped your code to a server, and
-            still left two edges it could only guess at.
+            <span className="font-semibold text-[var(--text)]">Same repo, different graph.</span>{" "}
+            Contextifly linked the whole stack — front-end call → API route → service → entity — into one{" "}
+            <b style={{ color: "var(--green)" }}>exact, file:line-cited</b> trace. The LLM route produced a{" "}
+            <b style={{ color: "var(--amber)" }}>topic communities + concepts</b>, but never built the route
+            identities that join front to back — so the cross-layer links stay guesses (~?).
           </p>
         </div>
       </div>
@@ -471,7 +514,7 @@ function PanelHeader({
   featured,
 }: {
   accent: string;
-  icon: "cloud" | "chip";
+  icon: "nodes" | "chip";
   title: string;
   sub: string;
   chip: string;
@@ -483,10 +526,12 @@ function PanelHeader({
         className="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
         style={{ background: `${accent}1f`, border: `1px solid ${accent}55`, color: accent }}
       >
-        {icon === "cloud" ? (
+        {icon === "nodes" ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.34 9.5 4 4 0 0 0 7 17.5" />
-            <path d="M12 12v9M9 18l3 3 3-3" />
+            <circle cx="5" cy="6" r="2.2" />
+            <circle cx="19" cy="9" r="2.2" />
+            <circle cx="10" cy="18" r="2.2" />
+            <path d="M7 6.8l10 1.6M17.5 10.8 11.4 16.2M8.4 16.2 6 8" />
           </svg>
         ) : (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

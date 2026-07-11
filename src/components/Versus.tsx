@@ -30,12 +30,18 @@ export default function Versus() {
             A compiler you can <span className="gradient-text">trust</span> — not a model you hope is right.
           </h2>
           <p data-r className="mx-auto mt-5 max-w-[60ch] text-[17px] leading-relaxed text-[var(--muted)]">
-            LLM-extracted graph tools are clever, but they&apos;re probabilistic and they read your code in
-            the cloud. Contextifly is deterministic, local, and cites its evidence.
+            LLM-extracted graph tools are clever, but they map calls and let a model infer the semantics.
+            Contextifly is a deterministic compiler that links your whole stack and cites every edge.
           </p>
         </Reveal>
 
         <Reveal className="mx-auto mt-14 max-w-[920px]">
+          <p data-r className="mx-auto mb-4 max-w-[64ch] text-center text-[13px] leading-relaxed text-[var(--faint)]">
+            How to read this:{" "}
+            <span className="font-semibold" style={{ color: "var(--green)" }}>✓</span> the tool does this well ·{" "}
+            <span className="font-semibold" style={{ color: "var(--amber)" }}>✗</span> a limitation on that row —{" "}
+            <span className="text-[var(--muted)]">not an overall verdict</span>. Each tool wins different rows.
+          </p>
           <div data-r className="glass-strong overflow-hidden">
             {/* header */}
             <div className="grid grid-cols-[1.3fr_1fr_1fr] border-b border-[var(--border)] text-[13px] sm:text-[14px]">
@@ -45,7 +51,7 @@ export default function Versus() {
                 <span>Contextifly</span>
               </div>
               <div className="border-l border-[var(--border)] px-4 py-4 font-semibold text-[var(--muted)] sm:px-6">
-                LLM-extracted tools
+                Other graph tools
               </div>
             </div>
 

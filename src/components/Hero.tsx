@@ -87,7 +87,11 @@ export default function Hero() {
         </div>
 
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-          <a href="#compare" className="hero-cta btn btn-primary">
+          <a
+            href="#compare"
+            className="hero-cta btn btn-primary"
+            onClick={() => window.dispatchEvent(new CustomEvent("ctx:replay-compare"))}
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M8 5v14l11-7z" />
             </svg>

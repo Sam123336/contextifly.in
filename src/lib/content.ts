@@ -72,6 +72,51 @@ export const GRAPH_EDGES: GEdge[] = [
 // the money-shot trace, in order (frontend → api → backend → entity)
 export const TRACE_PATH = ["checkout", "postOrders", "orderCtl", "orderSvc", "order"];
 
+/* The LLM-extracted view of the SAME app: a call-graph that never merges the
+   frontend fetch with the backend handler. They sit in two separate clusters,
+   bridged only by edges the model *guesses* (fuzzy `~?`). This is what makes
+   the two panels visibly different — Contextifly merges endpoints, the LLM
+   tool leaves front and back as disconnected islands. */
+export const LLM_NODES: GNode[] = [
+  // frontend cluster (left)
+  { id: "l_app", label: "App", kind: "frontend", x: 66, y: 40 },
+  { id: "l_cart", label: "CartPage", kind: "frontend", x: 58, y: 116 },
+  { id: "l_card", label: "ProductCard", kind: "frontend", x: 150, y: 84 },
+  { id: "l_checkout", label: "CheckoutBtn", kind: "frontend", x: 150, y: 166 },
+  { id: "l_usecart", label: "useCart", kind: "state", x: 56, y: 206, god: true },
+  { id: "l_getcall", label: "fetch /products", kind: "api", x: 140, y: 250 },
+  { id: "l_postcall", label: "fetch /orders", kind: "api", x: 140, y: 300 },
+  // backend cluster (right) — separate island
+  { id: "l_getep", label: "@Get /products", kind: "api", x: 300, y: 90 },
+  { id: "l_prodCtl", label: "ProductCtl", kind: "backend", x: 392, y: 70 },
+  { id: "l_prodSvc", label: "ProductSvc", kind: "backend", x: 400, y: 120 },
+  { id: "l_postep", label: "@Post /orders", kind: "api", x: 300, y: 210 },
+  { id: "l_orderCtl", label: "OrderCtl", kind: "backend", x: 392, y: 235 },
+  { id: "l_orderSvc", label: "OrderSvc", kind: "backend", x: 400, y: 285 },
+  { id: "l_order", label: "Order", kind: "entity", x: 330, y: 305 },
+];
+
+export const LLM_EDGES: GEdge[] = [
+  // frontend island
+  { from: "l_app", to: "l_cart", rel: "renders" },
+  { from: "l_app", to: "l_card", rel: "renders" },
+  { from: "l_cart", to: "l_checkout", rel: "renders" },
+  { from: "l_cart", to: "l_usecart", rel: "uses" },
+  { from: "l_card", to: "l_usecart", rel: "uses" },
+  { from: "l_card", to: "l_getcall", rel: "fetch" },
+  { from: "l_checkout", to: "l_postcall", rel: "fetch" },
+  // backend island
+  { from: "l_getep", to: "l_prodCtl", rel: "handled by" },
+  { from: "l_prodCtl", to: "l_prodSvc", rel: "injects" },
+  { from: "l_postep", to: "l_orderCtl", rel: "handled by" },
+  { from: "l_orderCtl", to: "l_orderSvc", rel: "injects" },
+  { from: "l_orderSvc", to: "l_order", rel: "persists" },
+  // the only links across the gap are LLM guesses
+  { from: "l_getcall", to: "l_getep", rel: "guessed", fuzzy: true },
+  { from: "l_postcall", to: "l_postep", rel: "guessed", fuzzy: true },
+  { from: "l_prodSvc", to: "l_order", rel: "guessed", fuzzy: true },
+];
+
 export const KIND_COLOR: Record<GNodeKind, string> = {
   frontend: "#4d7cff",
   state: "#9a5bff",
@@ -147,12 +192,14 @@ export interface CompareRow {
 }
 
 export const COMPARE_ROWS: CompareRow[] = [
-  { label: "How the code graph is built", contextifly: "Compiler (TS / AST parsers)", ctxGood: true, llmTools: "LLM semantic extraction", llmGood: false },
-  { label: "Determinism", contextifly: "Byte-identical every run", ctxGood: true, llmTools: "Probabilistic, varies per run", llmGood: false },
-  { label: "Your source code", contextifly: "Never leaves your machine", ctxGood: true, llmTools: "Semantic content sent to a model", llmGood: false },
-  { label: "Evidence", contextifly: "Every edge cites file:line + confidence", ctxGood: true, llmTools: "No provenance", llmGood: false },
-  { label: "Full-stack linking", contextifly: "fetch ↔ @Post() merge into one node", ctxGood: true, llmTools: "Not structural — concept-level only", llmGood: false },
-  { label: "Re-index after an edit", contextifly: "~17ms incremental", ctxGood: true, llmTools: "Re-run the model", llmGood: false },
+  { label: "How the code graph is built", contextifly: "Compiler (TS / AST parsers)", ctxGood: true, llmTools: "Tree-sitter AST + LLM extraction", llmGood: true },
+  { label: "Inputs it reads", contextifly: "Source code only — TS/React/Nest/Flutter", ctxGood: false, llmTools: "Code + docs, PDFs, images, diagrams", llmGood: true },
+  { label: "What the graph models", contextifly: "App wiring: routes, DI, entities", ctxGood: true, llmTools: "Topic communities + concepts", llmGood: false },
+  { label: "Endpoints & routing", contextifly: "Every route a node — fetch ↔ @Post() merge", ctxGood: true, llmTools: "Endpoints barely modeled, no route identity", llmGood: false },
+  { label: "Determinism", contextifly: "Byte-identical every run", ctxGood: true, llmTools: "Probabilistic — inferred edges vary", llmGood: false },
+  { label: "Your source code", contextifly: "Never leaves your machine", ctxGood: true, llmTools: "Semantic step sends content to a model", llmGood: false },
+  { label: "Evidence", contextifly: "Every edge structural, cites file:line", ctxGood: true, llmTools: "Some edges are model-inferred (guessed)", llmGood: false },
+  { label: "Re-index after an edit", contextifly: "~17ms incremental", ctxGood: true, llmTools: "Re-runs LLM extraction on changed files", llmGood: false },
   { label: "Cost per query", contextifly: "A few hundred tokens", ctxGood: true, llmTools: "Thousands of tokens", llmGood: false },
 ];
 
