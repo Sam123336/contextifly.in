@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Contextifly — Give your AI a memory of your codebase",
   description:
-    "A persistent context engine for AI coding assistants. Contextifly compiles your React, NestJS and Flutter code into a live, deterministic knowledge graph — 100% local, evidence-backed, and full-stack. See how it beats LLM-extracted graph tools, live.",
+    "A persistent context engine for AI coding assistants. Contextifly compiles your React, NestJS and Flutter code into a live, deterministic knowledge graph — 100% local, evidence-backed, and full-stack. See how it beats other graph tools, live.",
   keywords: [
     "Contextifly",
     "code knowledge graph",

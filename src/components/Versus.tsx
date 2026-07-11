@@ -30,7 +30,7 @@ export default function Versus() {
             A compiler you can <span className="gradient-text">trust</span> — not a model you hope is right.
           </h2>
           <p data-r className="mx-auto mt-5 max-w-[60ch] text-[17px] leading-relaxed text-[var(--muted)]">
-            LLM-extracted graph tools are clever, but they map calls and let a model infer the semantics.
+            Other graph tools are clever, but they map calls and let a model infer the semantics.
             Contextifly is a deterministic compiler that links your whole stack and cites every edge.
           </p>
         </Reveal>

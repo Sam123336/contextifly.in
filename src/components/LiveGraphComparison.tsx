@@ -393,8 +393,8 @@ export default function LiveGraphComparison() {
             Same repo. Two engines. <span className="gradient-text">Watch them build.</span>
           </h2>
           <p className="compare-reveal mx-auto mt-5 max-w-[64ch] text-[17px] leading-relaxed text-[var(--muted)]">
-            Point both at the same e-commerce app. Both start from the AST — then split. An
-            LLM-extracted tool clusters your code into <em>topic communities</em> + concepts. Contextifly
+            Point both at the same e-commerce app. Both start from the AST — then split. The
+            other tool clusters your code into <em>topic communities</em> + concepts. Contextifly
             keeps compiling: it links the front-end call → API route → service → entity into one{" "}
             <span className="text-[var(--text)]">full-stack</span> trace, with the file:line to prove it.
           </p>
@@ -423,7 +423,7 @@ export default function LiveGraphComparison() {
             <PanelHeader
               accent="#f5a524"
               icon="nodes"
-              title="LLM-extracted graph"
+              title="Other graph tool"
               sub="e.g. Graphify-style · Tree-sitter + LLM"
               chip="communities + concepts"
             />
