@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Contextifly — marketing site
 
-## Getting Started
+A dark, GSAP-animated landing page for **Contextifly**, the persistent context
+engine for AI coding assistants. Built to be visibly *different* from the
+light-themed LLM knowledge-graph tools it competes with — the hero feature is a
+**live, side-by-side graph comparison** that dramatizes Contextifly's real
+differentiators (compiler vs. LLM, local vs. cloud, deterministic + cited).
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, TypeScript)
+- **Tailwind CSS v4**
+- **GSAP 3** + `@gsap/react` (`useGSAP`) — ScrollTrigger, timelines, count-ups
+- Zero external UI libraries; all graphics are hand-built SVG / canvas
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install       # already done
+npm run dev       # http://localhost:3000
+npm run build     # production build
+npm start         # serve the production build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## The centerpiece — “Same repo. Two engines.”
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`src/components/LiveGraphComparison.tsx` renders the same small full-stack
+e-commerce app twice and races two engines against each other with GSAP:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| | LLM-extracted (Graphify-style) | Contextifly (compiler) |
+|---|---|---|
+| Build | streams in slowly, ~42s | snaps in, ~1.9s |
+| Cost | ~123k tokens | ~380 tokens |
+| Edges | dashed `~?` uncertain links, a “god node” | solid, exact |
+| Trace | — | glowing full-stack path with `file:line` |
+| Privacy | code leaves the machine | 100% local |
 
-## Learn More
+It auto-plays when scrolled into view (ScrollTrigger) and can be replayed.
 
-To learn more about Next.js, take a look at the following resources:
+## Notes on the animation setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Plugins are registered once in `src/lib/gsapSetup.ts` (the gsap-skills
+  canonical pattern), which also exposes `window.gsap` in dev for debugging.
+- `reactStrictMode` is off (`next.config.ts`) so dev matches production —
+  Strict Mode's dev-only double-invoke re-fires one-shot `.from()` tweens.
+- A ticker-stall safety net (`.gsap-stalled` class + CSS) guarantees content is
+  never left hidden if `requestAnimationFrame` never advances (headless/paused
+  renderers). Real browsers never hit it.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Structure
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/            layout, page (section composition), globals (design system)
+  components/     Nav, Hero, Problem, LiveGraphComparison, Metrics,
+                  Pipeline, TraceFlow, Features, Versus, Install, Footer …
+  lib/            content.ts (copy + graph data), gsapSetup.ts
+```
