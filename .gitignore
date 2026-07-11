@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# contextifly local graph artifact (never deploy)
+.pixelcontextifly/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
