@@ -56,3 +56,5 @@ src/
                   Pipeline, TraceFlow, Features, Versus, Install, Footer …
   lib/            content.ts (copy + graph data), gsapSetup.ts
 ```
+
+
