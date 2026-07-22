@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import AmbientBackdrop from "@/components/AmbientBackdrop";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,11 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 const SITE_URL = "https://www.contextifly.in";
-const TITLE = "Contextifly — Give your AI a memory of your codebase";
+const TITLE = "Contextifly: Give your AI a memory of your codebase";
 const DESCRIPTION =
-  "A persistent context engine for AI coding assistants. Contextifly compiles your React, NestJS and Flutter code into a live, deterministic knowledge graph — 100% local, evidence-backed, and full-stack. See how it beats other graph tools, live.";
+  "A persistent context engine for AI coding assistants. Contextifly compiles your React, NestJS and Flutter code into a live, deterministic knowledge graph. 100% local, evidence-backed, and full-stack. See how it beats other graph tools, live.";
 const OG_DESCRIPTION =
-  "A compiler for software architecture. A live, deterministic code graph — 100% local, full-stack, evidence-backed.";
+  "A compiler for software architecture. A live, deterministic code graph. 100% local, full-stack, evidence-backed.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -108,6 +109,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <AmbientBackdrop />
         {children}
       </body>
     </html>

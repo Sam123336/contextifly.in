@@ -12,10 +12,10 @@ export default function Metrics() {
       const nums = gsap.utils.toArray<HTMLElement>(".metric-num");
 
       gsap.from(".metric-card", {
-        y: 30,
+        y: 24,
         opacity: 0,
-        stagger: 0.1,
-        duration: 0.7,
+        stagger: 0.08,
+        duration: 0.6,
         ease: "power3.out",
         scrollTrigger: { trigger: root.current, start: "top 78%" },
       });
@@ -25,7 +25,7 @@ export default function Metrics() {
         const obj = { v: 0 };
         gsap.to(obj, {
           v: target,
-          duration: 1.6,
+          duration: 1.4,
           ease: "power2.out",
           scrollTrigger: { trigger: root.current, start: "top 75%", once: true },
           onUpdate() {
@@ -38,19 +38,17 @@ export default function Metrics() {
   );
 
   return (
-    <section ref={root} className="relative py-16 md:py-20">
+    <section ref={root} className="relative border-t border-[var(--border)] py-14 md:py-16">
       <div className="container-x">
-        <div className="glass-strong grid gap-px overflow-hidden rounded-3xl border border-[var(--border-strong)] sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           {METRICS.map((m) => (
-            <div key={m.label} className="metric-card bg-[#0a0d17]/40 p-7 text-center">
-              <div className="flex items-baseline justify-center gap-0.5">
-                <span className="metric-num text-[46px] font-bold leading-none gradient-text-static" data-value={m.value}>
-                  0
-                </span>
-                <span className="text-[26px] font-bold gradient-text-static">{m.suffix}</span>
+            <div key={m.label} className="metric-card border-l border-[var(--border)] pl-6 first:border-l-0 first:pl-0 sm:[&:nth-child(3)]:border-l-0 sm:[&:nth-child(3)]:pl-0 lg:[&:nth-child(3)]:border-l lg:[&:nth-child(3)]:pl-6">
+              <div className="mono flex items-baseline gap-0.5 text-[38px] font-semibold leading-none tracking-tight">
+                <span className="metric-num" data-value={m.value}>0</span>
+                <span className="text-[22px]">{m.suffix}</span>
               </div>
-              <p className="mx-auto mt-3 max-w-[24ch] text-[13.5px] leading-snug text-[var(--muted)]">{m.label}</p>
-              <span className="mono mt-2 inline-block text-[11px] text-[var(--faint)]">{m.note}</span>
+              <p className="mt-3 max-w-[24ch] text-[13.5px] leading-snug text-[var(--muted)]">{m.label}</p>
+              <span className="mono mt-1.5 inline-block text-[11px] text-[var(--faint)]">{m.note}</span>
             </div>
           ))}
         </div>

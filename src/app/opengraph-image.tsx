@@ -1,11 +1,11 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Contextifly — Give your AI a memory of your codebase";
+export const alt = "Contextifly: Give your AI a memory of your codebase";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 // Branded social-share card. Uses only the Satori-safe CSS subset (flexbox,
-// linear-gradients, solid colours) so it renders reliably at build time.
+// solid colours) so it renders reliably at build time.
 export default function Image() {
   return new ImageResponse(
     (
@@ -17,9 +17,8 @@ export default function Image() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "72px 80px",
-          background:
-            "linear-gradient(135deg, #090c15 0%, #0d1224 55%, #12091c 100%)",
-          color: "#eef1fb",
+          background: "#0a0b0d",
+          color: "#f0f1f3",
           fontFamily: "sans-serif",
         }}
       >
@@ -29,7 +28,7 @@ export default function Image() {
               width: 40,
               height: 40,
               borderRadius: 10,
-              background: "linear-gradient(135deg,#4d7cff,#9a5bff)",
+              background: "#45d0b8",
             }}
           />
           <div style={{ fontSize: 34, fontWeight: 700 }}>Contextifly</div>
@@ -52,12 +51,12 @@ export default function Image() {
             display: "flex",
             marginTop: 32,
             fontSize: 34,
-            color: "#aeb6d6",
+            color: "#9aa0ab",
             maxWidth: 940,
             lineHeight: 1.35,
           }}
         >
-          A deterministic, full-stack code knowledge graph — 100% local,
+          A deterministic, full-stack code knowledge graph. 100% local,
           evidence-backed.
         </div>
         <div
@@ -65,7 +64,7 @@ export default function Image() {
             display: "flex",
             marginTop: 44,
             fontSize: 26,
-            color: "#7c85a8",
+            color: "#63686f",
             letterSpacing: 1,
           }}
         >

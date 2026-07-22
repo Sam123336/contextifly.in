@@ -6,10 +6,10 @@
 export const GITHUB_URL = "https://github.com/Sam123336/Contextifly";
 
 export const NAV_LINKS = [
-  { label: "Live compare", href: "#compare" },
+  { label: "Compare", href: "#compare" },
   { label: "How it works", href: "#pipeline" },
   { label: "Tools", href: "#tools" },
-  { label: "vs Others", href: "#versus" },
+  { label: "Versus", href: "#versus" },
   { label: "Install", href: "#install" },
 ];
 
@@ -118,11 +118,11 @@ export const LLM_EDGES: GEdge[] = [
 ];
 
 export const KIND_COLOR: Record<GNodeKind, string> = {
-  frontend: "#4d7cff",
-  state: "#9a5bff",
-  api: "#29e0d4",
-  backend: "#34e39b",
-  entity: "#ff5d9e",
+  frontend: "#7fa3f0",
+  state: "#ab8eea",
+  api: "#45d0b8",
+  backend: "#7fce8e",
+  entity: "#dd88a4",
 };
 
 export const KIND_LABEL: Record<GNodeKind, string> = {
@@ -153,31 +153,31 @@ export const FEATURES: Feature[] = [
     icon: "impact",
     tag: "get_impact",
     title: "Blast-radius analysis",
-    desc: "“What breaks if I change ProductCard?” — affected components, routes, contexts and APIs, with a Low / Med / High regression score.",
+    desc: "“What breaks if I change ProductCard?” Affected components, routes, contexts and APIs, with a Low / Med / High regression score.",
   },
   {
     icon: "twin",
     tag: "what_if",
     title: "Digital-twin simulation",
-    desc: "Simulate remove / split / lazy-load before you touch a line of code. See what breaks and what stays safe — then decide.",
+    desc: "Simulate remove / split / lazy-load before you touch a line of code. See what breaks and what stays safe, then decide.",
   },
   {
     icon: "map",
     tag: "get_project_map",
     title: "Instant project map",
-    desc: "Every route with its component tree and API calls, plus a Mermaid navigation diagram — a 40-file crawl becomes one query.",
+    desc: "Every route with its component tree and API calls, plus a Mermaid navigation diagram. A 40-file crawl becomes one query.",
   },
   {
     icon: "score",
     tag: "analyze_project",
     title: "Architecture score",
-    desc: "0–100 health: circular imports, dead code, unused routes, oversized components, and copy-pasted-then-renamed duplicates caught by JSX-shape fingerprint.",
+    desc: "0-100 health: circular imports, dead code, unused routes, oversized components, and copy-pasted-then-renamed duplicates caught by JSX-shape fingerprint.",
   },
   {
-    icon: "eye",
-    tag: "analyze_screenshot",
-    title: "Screenshot → markdown",
-    desc: "UI screenshots become structured developer markdown — screen type, components, layout, issues — at ~95% fewer vision tokens. Measured.",
+    icon: "feature",
+    tag: "get_feature",
+    title: "Feature-level answers",
+    desc: "“Explain Authentication”: its routes, components, state, APIs and entry points in one answer. Think in features, not files.",
   },
 ];
 
@@ -193,10 +193,10 @@ export interface CompareRow {
 
 export const COMPARE_ROWS: CompareRow[] = [
   { label: "How the code graph is built", contextifly: "Compiler (TS / AST parsers)", ctxGood: true, llmTools: "Tree-sitter AST + LLM extraction", llmGood: true },
-  { label: "Inputs it reads", contextifly: "Source code only — TS/React/Nest/Flutter", ctxGood: false, llmTools: "Code + docs, PDFs, images, diagrams", llmGood: true },
+  { label: "Inputs it reads", contextifly: "Source code only: TS/React/Nest/Flutter", ctxGood: false, llmTools: "Code + docs, PDFs, images, diagrams", llmGood: true },
   { label: "What the graph models", contextifly: "App wiring: routes, DI, entities", ctxGood: true, llmTools: "Topic communities + concepts", llmGood: false },
-  { label: "Endpoints & routing", contextifly: "Every route a node — fetch ↔ @Post() merge", ctxGood: true, llmTools: "Endpoints barely modeled, no route identity", llmGood: false },
-  { label: "Determinism", contextifly: "Byte-identical every run", ctxGood: true, llmTools: "Probabilistic — inferred edges vary", llmGood: false },
+  { label: "Endpoints & routing", contextifly: "Every route a node, fetch ↔ @Post() merge", ctxGood: true, llmTools: "Endpoints barely modeled, no route identity", llmGood: false },
+  { label: "Determinism", contextifly: "Byte-identical every run", ctxGood: true, llmTools: "Probabilistic, inferred edges vary", llmGood: false },
   { label: "Your source code", contextifly: "Never leaves your machine", ctxGood: true, llmTools: "Semantic step sends content to a model", llmGood: false },
   { label: "Evidence", contextifly: "Every edge structural, cites file:line", ctxGood: true, llmTools: "Some edges are model-inferred (guessed)", llmGood: false },
   { label: "Re-index after an edit", contextifly: "~17ms incremental", ctxGood: true, llmTools: "Re-runs LLM extraction on changed files", llmGood: false },
@@ -206,11 +206,11 @@ export const COMPARE_ROWS: CompareRow[] = [
 /* ---------- Pipeline ---------- */
 
 export const PIPELINE = [
-  { step: "Providers", desc: "Compile one slice — a framework, a spec, a config — into IR nodes & edges.", detail: "ts-morph · NestJS decorators · Dart scanner" },
+  { step: "Providers", desc: "Compile one slice (a framework, a spec, a config) into IR nodes & edges.", detail: "ts-morph · NestJS decorators · Dart scanner" },
   { step: "Versioned IR", desc: "The stable node/edge schema everything else is written against.", detail: "one contract, cited provenance" },
   { step: "Normalizer", desc: "Assigns framework-agnostic semantic roles on top of syntax.", detail: "entry-point · business-logic · data-model" },
-  { step: "Algorithms", desc: "Impact, traces, diffs, scoring, maps — pure graph computation.", detail: "provider-agnostic, deterministic" },
-  { step: "AI", desc: "Explains, summarizes, plans — always the last step, never the source of truth.", detail: "queries the graph, never guesses" },
+  { step: "Algorithms", desc: "Impact, traces, diffs, scoring, maps. Pure graph computation.", detail: "provider-agnostic, deterministic" },
+  { step: "AI", desc: "Explains, summarizes, plans. Always the last step, never the source of truth.", detail: "queries the graph, never guesses" },
 ];
 
 /* ---------- Metrics ---------- */
@@ -227,7 +227,7 @@ export const METRICS = [
 export const TRACE_STEPS = [
   { n: 1, node: "CheckoutButton", kind: "frontend", meta: "components/CheckoutButton.tsx:23", note: "user taps “Place order”" },
   { n: 2, node: "POST /orders", kind: "api", meta: "fetch('/orders', { method: 'POST' })", note: "frontend call" },
-  { n: 3, node: "OrderController", kind: "backend", meta: "@Post() order.controller.ts:27", note: "same endpoint node — merged" },
+  { n: 3, node: "OrderController", kind: "backend", meta: "@Post() order.controller.ts:27", note: "same endpoint node, merged" },
   { n: 4, node: "OrderService", kind: "backend", meta: "injected · order.service.ts:33", note: "business logic" },
   { n: 5, node: "Order", kind: "entity", meta: "order.entity.ts:9", note: "data model" },
 ];

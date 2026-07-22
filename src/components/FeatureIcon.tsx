@@ -50,6 +50,14 @@ export default function FeatureIcon({ name }: { name: string }) {
           <circle cx="12" cy="12" r="1.5" fill="currentColor" />
         </svg>
       );
+    case "feature":
+      return (
+        <svg {...common}>
+          <path d="m12 2 9 5-9 5-9-5 9-5z" />
+          <path d="m3 12 9 5 9-5" />
+          <path d="m3 17 9 5 9-5" />
+        </svg>
+      );
     case "eye":
       return (
         <svg {...common}>
