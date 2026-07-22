@@ -57,4 +57,3 @@ src/
   lib/            content.ts (copy + graph data), gsapSetup.ts
 ```
 
-
