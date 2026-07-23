@@ -1,5 +1,7 @@
 # Contextifly — marketing site
 
+**Live at [www.contextifly.in](https://www.contextifly.in)**
+
 A dark, GSAP-animated landing page for **Contextifly**, the persistent context
 engine for AI coding assistants. Built to be visibly *different* from the
 light-themed LLM knowledge-graph tools it competes with — the hero feature is a
