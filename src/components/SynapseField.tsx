@@ -6,23 +6,20 @@ import { ScrollTrigger } from "@/lib/gsapSetup";
 import { KIND_COLOR } from "@/lib/content";
 
 /**
- * Site-wide 3D background: a shader-rendered spiral galaxy with a black-hole
- * hub. Every star is a soft round glow (custom GLSL, not the default square
- * GL points), with per-star twinkle and a cursor halo computed on the GPU.
- * Small planet spheres orbit the core, wired to the hub. The camera dives
- * into the galaxy as you scroll (ScrollTrigger). One draw call per layer,
- * zero per-frame JS particle loops, static under prefers-reduced-motion.
+ * Site-wide 3D background: a galaxy made of graphs. Node communities
+ * (clusters tinted by the product's node-kind colors) float in a flattened
+ * disc; edges wire satellites to their hub and hubs to nearby hubs — a
+ * knowledge graph at cosmic scale. Nodes are soft round glows (custom GLSL)
+ * with per-node twinkle and a cursor halo computed on the GPU. The camera
+ * dives into the disc as you scroll (ScrollTrigger). Static geometry, one
+ * draw call per layer, static under prefers-reduced-motion.
  */
-const STARS = 16000;
-const FAR_STARS = 1800;
-const RADIUS = 780;
-const BRANCHES = 3;
-const SPIN = 2.6;
-const PLANETS = 5;
+const CLUSTERS = 18;
+const SATS_MIN = 10;
+const SATS_MAX = 22;
+const DISC_RADIUS = 620;
+const DUST = 900;
 const ACCENT = new THREE.Color("#45d0b8");
-const CORE = new THREE.Color("#b8fff2");
-const MID = new THREE.Color("#4fd0e8");
-const OUTER = new THREE.Color("#8b7ff0");
 const KIND_COLORS = Object.values(KIND_COLOR).map((c) => new THREE.Color(c));
 
 const VERT = /* glsl */ `
@@ -51,25 +48,7 @@ const FRAG = /* glsl */ `
   }
 `;
 
-/** Photon-ring "black hole" sprite: dark core, bright teal ring, soft halo. */
-function blackHoleTexture() {
-  const size = 256;
-  const c = document.createElement("canvas");
-  c.width = c.height = size;
-  const ctx = c.getContext("2d")!;
-  const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-  g.addColorStop(0.0, "rgba(2,3,4,1)");
-  g.addColorStop(0.28, "rgba(2,3,4,1)");
-  g.addColorStop(0.34, "rgba(184,255,242,0.95)");
-  g.addColorStop(0.4, "rgba(69,208,184,0.5)");
-  g.addColorStop(0.58, "rgba(69,208,184,0.13)");
-  g.addColorStop(1.0, "rgba(69,208,184,0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, size, size);
-  return new THREE.CanvasTexture(c);
-}
-
-/** Soft round dot texture for the far starfield. */
+/** Soft round dot texture for the ambient dust field. */
 function dotTexture() {
   const c = document.createElement("canvas");
   c.width = c.height = 64;
@@ -94,42 +73,86 @@ export default function SynapseField() {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 1, 6000);
 
-    // ---------- the spiral galaxy (custom shader, soft round stars) ----------
-    const pos = new Float32Array(STARS * 3);
-    const col = new Float32Array(STARS * 3);
-    const sizes = new Float32Array(STARS);
-    const phases = new Float32Array(STARS);
+    // ---------- build the graph galaxy ----------
+    const nodePos: number[] = [];
+    const nodeCol: number[] = [];
+    const nodeSize: number[] = [];
+    const nodePhase: number[] = [];
+    const edgePos: number[] = [];
+    const edgeCol: number[] = [];
     const tmpC = new THREE.Color();
-    for (let i = 0; i < STARS; i++) {
-      const r = Math.random() ** 1.7 * RADIUS + 26;
-      const branch = ((i % BRANCHES) / BRANCHES) * Math.PI * 2;
-      const angle = branch + (r / RADIUS) * SPIN;
-      const rnd = (p: number) => (Math.random() ** p) * (Math.random() < 0.5 ? 1 : -1);
-      const spread = 0.38 * r;
-      const x = Math.cos(angle) * r + rnd(3) * spread;
-      const z = Math.sin(angle) * r + rnd(3) * spread;
-      const y = rnd(3) * spread * 0.32;
-      pos[i * 3] = x;
-      pos[i * 3 + 1] = y;
-      pos[i * 3 + 2] = z;
-      const t = Math.min(1, r / RADIUS);
-      if (t < 0.5) tmpC.copy(CORE).lerp(MID, t * 2);
-      else tmpC.copy(MID).lerp(OUTER, (t - 0.5) * 2);
-      tmpC.multiplyScalar(0.55 + Math.random() * 0.45);
-      tmpC.toArray(col, i * 3);
-      sizes[i] = Math.random() < 0.03 ? 15 + Math.random() * 10 : 4 + Math.random() * 7;
-      phases[i] = Math.random();
+
+    const pushNode = (v: THREE.Vector3, c: THREE.Color, size: number) => {
+      nodePos.push(v.x, v.y, v.z);
+      nodeCol.push(c.r, c.g, c.b);
+      nodeSize.push(size);
+      nodePhase.push(Math.random());
+    };
+    const edgeList: { a: THREE.Vector3; b: THREE.Vector3; color: THREE.Color }[] = [];
+    const pushEdge = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Color, dim: number) => {
+      edgePos.push(a.x, a.y, a.z, b.x, b.y, b.z);
+      edgeCol.push(c.r * dim, c.g * dim, c.b * dim, c.r * dim, c.g * dim, c.b * dim);
+      edgeList.push({ a: a.clone(), b: b.clone(), color: c });
+    };
+
+    const hubs: { p: THREE.Vector3; color: THREE.Color }[] = [];
+    for (let i = 0; i < CLUSTERS; i++) {
+      // hubs on loose spiral rings around the center, flattened like a disc
+      const a = (i / CLUSTERS) * Math.PI * 2 * 2.3 + Math.random() * 0.7;
+      const r = 90 + (i / CLUSTERS) * DISC_RADIUS + (Math.random() - 0.5) * 90;
+      const hub = new THREE.Vector3(
+        Math.cos(a) * r,
+        (Math.random() - 0.5) * 70,
+        Math.sin(a) * r
+      );
+      const color = KIND_COLORS[i % KIND_COLORS.length];
+      hubs.push({ p: hub, color });
+
+      tmpC.copy(color).lerp(new THREE.Color("#ffffff"), 0.45);
+      pushNode(hub, tmpC, 30 + Math.random() * 10);
+
+      // satellites in a squashed ball around the hub
+      const sats: THREE.Vector3[] = [];
+      const nSats = SATS_MIN + Math.floor(Math.random() * (SATS_MAX - SATS_MIN + 1));
+      for (let s = 0; s < nSats; s++) {
+        const sat = new THREE.Vector3()
+          .randomDirection()
+          .multiply(new THREE.Vector3(1, 0.45, 1))
+          .multiplyScalar(34 + Math.random() ** 1.5 * 78)
+          .add(hub);
+        sats.push(sat);
+        tmpC.copy(color).multiplyScalar(0.55 + Math.random() * 0.45);
+        pushNode(sat, tmpC, 9 + Math.random() * 10);
+        if (Math.random() < 0.75) pushEdge(hub, sat, color, 0.7);
+      }
+      // a few peer links between satellites for real graph texture
+      for (let s = 0; s < sats.length - 1; s += 3) {
+        pushEdge(sats[s], sats[s + 1], color, 0.45);
+      }
     }
-    const galaxyGeo = new THREE.BufferGeometry();
-    galaxyGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    galaxyGeo.setAttribute("aColor", new THREE.BufferAttribute(col, 3));
-    galaxyGeo.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
-    galaxyGeo.setAttribute("aPhase", new THREE.BufferAttribute(phases, 1));
+
+    // inter-cluster backbone: each hub wires to its 2 nearest hubs, in accent
+    for (let i = 0; i < hubs.length; i++) {
+      const near = hubs
+        .map((h, j) => ({ j, d: h.p.distanceTo(hubs[i].p) }))
+        .filter((x) => x.j !== i)
+        .sort((x, y) => x.d - y.d)
+        .slice(0, 2);
+      for (const n of near) {
+        if (n.j > i) pushEdge(hubs[i].p, hubs[n.j].p, ACCENT, 0.55);
+      }
+    }
+
+    const nodeGeo = new THREE.BufferGeometry();
+    nodeGeo.setAttribute("position", new THREE.Float32BufferAttribute(nodePos, 3));
+    nodeGeo.setAttribute("aColor", new THREE.Float32BufferAttribute(nodeCol, 3));
+    nodeGeo.setAttribute("aSize", new THREE.Float32BufferAttribute(nodeSize, 1));
+    nodeGeo.setAttribute("aPhase", new THREE.Float32BufferAttribute(nodePhase, 1));
     const uniforms = {
       uTime: { value: 0 },
       uMouse: { value: new THREE.Vector3(1e5, 0, 1e5) },
     };
-    const galaxyMat = new THREE.ShaderMaterial({
+    const nodeMat = new THREE.ShaderMaterial({
       vertexShader: VERT,
       fragmentShader: FRAG,
       uniforms,
@@ -137,62 +160,69 @@ export default function SynapseField() {
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
-    scene.add(new THREE.Points(galaxyGeo, galaxyMat));
+    scene.add(new THREE.Points(nodeGeo, nodeMat));
 
-    // ---------- black hole hub + light ----------
-    const bh = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: blackHoleTexture(), transparent: true, depthWrite: false })
-    );
-    bh.scale.set(130, 130, 1);
-    scene.add(bh);
-    scene.add(new THREE.AmbientLight(0x8899aa, 0.5));
-    scene.add(new THREE.PointLight(ACCENT, 3.0, 0, 0.6));
-
-    // ---------- small planets orbiting the hub, wired to it ----------
-    const planets: { mesh: THREE.Mesh; r: number; ph: number; sp: number; mat: THREE.MeshStandardMaterial }[] = [];
-    for (let i = 0; i < PLANETS; i++) {
-      const color = KIND_COLORS[i % KIND_COLORS.length];
-      const mat = new THREE.MeshStandardMaterial({
-        color,
-        roughness: 0.5,
-        metalness: 0.15,
-        emissive: color,
-        emissiveIntensity: 0.25,
-      });
-      const mesh = new THREE.Mesh(new THREE.SphereGeometry(5 + Math.random() * 6, 24, 16), mat);
-      scene.add(mesh);
-      planets.push({ mesh, r: 130 + i * 52, ph: Math.random() * Math.PI * 2, sp: 0.3 / Math.sqrt(1 + i * 0.4), mat });
-    }
-    const edgePos = new Float32Array(PLANETS * 6);
     const edgeGeo = new THREE.BufferGeometry();
-    edgeGeo.setAttribute("position", new THREE.BufferAttribute(edgePos, 3).setUsage(THREE.DynamicDrawUsage));
-    scene.add(
-      new THREE.LineSegments(
-        edgeGeo,
-        new THREE.LineBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.28, depthWrite: false })
-      )
-    );
+    edgeGeo.setAttribute("position", new THREE.Float32BufferAttribute(edgePos, 3));
+    edgeGeo.setAttribute("color", new THREE.Float32BufferAttribute(edgeCol, 3));
+    const edgeMat = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.5,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    scene.add(new THREE.LineSegments(edgeGeo, edgeMat));
 
-    // ---------- far star shell (round soft dots) ----------
-    const farPos = new Float32Array(FAR_STARS * 3);
-    const dirV = new THREE.Vector3();
-    for (let i = 0; i < FAR_STARS; i++) {
-      dirV.randomDirection().multiplyScalar(1300 + Math.random() * 1500);
-      dirV.toArray(farPos, i * 3);
+    // ---------- packets: glows transiting along the edges ----------
+    const nPackets = edgeList.length;
+    const pktPos = new Float32Array(nPackets * 3);
+    const pktCol = new Float32Array(nPackets * 3);
+    const pktSpeed = new Float32Array(nPackets);
+    const pktPhase = new Float32Array(nPackets);
+    for (let i = 0; i < nPackets; i++) {
+      tmpC.copy(edgeList[i].color).lerp(new THREE.Color("#ffffff"), 0.35);
+      tmpC.toArray(pktCol, i * 3);
+      pktSpeed[i] = 0.06 + Math.random() * 0.12;
+      pktPhase[i] = Math.random();
+      edgeList[i].a.toArray(pktPos, i * 3);
     }
-    const farGeo = new THREE.BufferGeometry();
-    farGeo.setAttribute("position", new THREE.BufferAttribute(farPos, 3));
-    const farTex = dotTexture();
+    const pktGeo = new THREE.BufferGeometry();
+    pktGeo.setAttribute("position", new THREE.BufferAttribute(pktPos, 3).setUsage(THREE.DynamicDrawUsage));
+    pktGeo.setAttribute("color", new THREE.BufferAttribute(pktCol, 3));
+    const pktTex = dotTexture();
+    const pktMat = new THREE.PointsMaterial({
+      size: 7,
+      map: pktTex,
+      vertexColors: true,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      opacity: 0.9,
+      sizeAttenuation: true,
+      depthWrite: false,
+    });
+    scene.add(new THREE.Points(pktGeo, pktMat));
+
+    // ---------- ambient dust shell (round soft dots) ----------
+    const dustPos = new Float32Array(DUST * 3);
+    const dirV = new THREE.Vector3();
+    for (let i = 0; i < DUST; i++) {
+      dirV.randomDirection().multiplyScalar(900 + Math.random() * 1800);
+      dirV.toArray(dustPos, i * 3);
+    }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
+    const dustTex = dotTexture();
     scene.add(
       new THREE.Points(
-        farGeo,
+        dustGeo,
         new THREE.PointsMaterial({
           size: 4.2,
-          map: farTex,
+          map: dustTex,
           color: 0xaec6d8,
           blending: THREE.AdditiveBlending,
           transparent: true,
-          opacity: 0.5,
+          opacity: 0.4,
           sizeAttenuation: true,
           depthWrite: false,
         })
@@ -204,28 +234,12 @@ export default function SynapseField() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     host.appendChild(renderer.domElement);
 
-    // camera flight: high above the disk -> gliding down into the arms
-    const camStart = { y: 340, z: 820 };
-    const camEnd = { y: 80, z: 430 };
+    // camera flight: high above the disc -> gliding down between the clusters
+    const camStart = { y: 300, z: 660 };
+    const camEnd = { y: 60, z: 340 };
     const flight = { p: 0 };
     camera.position.set(0, camStart.y, camStart.z);
     camera.lookAt(0, 0, 0);
-
-    const writePlanets = (t: number) => {
-      for (let i = 0; i < PLANETS; i++) {
-        const p = planets[i];
-        const a = p.ph + t * p.sp;
-        p.mesh.position.set(Math.cos(a) * p.r, Math.sin(a * 0.7) * 14, Math.sin(a) * p.r);
-        edgePos[i * 6] = 0;
-        edgePos[i * 6 + 1] = 0;
-        edgePos[i * 6 + 2] = 0;
-        edgePos[i * 6 + 3] = p.mesh.position.x;
-        edgePos[i * 6 + 4] = p.mesh.position.y;
-        edgePos[i * 6 + 5] = p.mesh.position.z;
-      }
-      edgeGeo.attributes.position.needsUpdate = true;
-    };
-    writePlanets(0);
 
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -237,17 +251,15 @@ export default function SynapseField() {
 
     const disposeAll = () => {
       window.removeEventListener("resize", onResize);
-      galaxyGeo.dispose();
-      galaxyMat.dispose();
+      nodeGeo.dispose();
+      nodeMat.dispose();
       edgeGeo.dispose();
-      farGeo.dispose();
-      farTex.dispose();
-      planets.forEach((p) => {
-        p.mesh.geometry.dispose();
-        p.mat.dispose();
-      });
-      bh.material.map?.dispose();
-      bh.material.dispose();
+      edgeMat.dispose();
+      pktGeo.dispose();
+      pktMat.dispose();
+      pktTex.dispose();
+      dustGeo.dispose();
+      dustTex.dispose();
       renderer.dispose();
       host.removeChild(renderer.domElement);
     };
@@ -285,7 +297,7 @@ export default function SynapseField() {
       t += 0.016;
       uniforms.uTime.value = t;
 
-      scene.rotation.y += 0.0006;
+      scene.rotation.y += 0.0005;
       flight.p += (scrollTarget - flight.p) * 0.045;
       const p = flight.p;
       camera.position.y = camStart.y + (camEnd.y - camStart.y) * p;
@@ -293,9 +305,20 @@ export default function SynapseField() {
       camera.position.x += (mouse.x * 60 - camera.position.x) * 0.03;
       camera.lookAt(0, 0, 0);
 
-      writePlanets(t);
+      // edges breathe gently with the twinkle rhythm
+      edgeMat.opacity = 0.42 + 0.1 * Math.sin(t * 0.9);
 
-      // project the pointer onto the galaxy plane, into galaxy-local space
+      // packets transit their edge, looping node -> node
+      for (let i = 0; i < nPackets; i++) {
+        const u = (t * pktSpeed[i] + pktPhase[i]) % 1;
+        const e = edgeList[i];
+        pktPos[i * 3] = e.a.x + (e.b.x - e.a.x) * u;
+        pktPos[i * 3 + 1] = e.a.y + (e.b.y - e.a.y) * u;
+        pktPos[i * 3 + 2] = e.a.z + (e.b.z - e.a.z) * u;
+      }
+      pktGeo.attributes.position.needsUpdate = true;
+
+      // project the pointer onto the disc plane, into scene-local space
       ray.set(mouse.x, mouse.y, 0.5).unproject(camera).sub(camera.position).normalize();
       const k = -camera.position.y / (ray.y || -1);
       if (k > 0) {
@@ -305,10 +328,6 @@ export default function SynapseField() {
         const sin = Math.sin(-scene.rotation.y);
         uniforms.uMouse.value.set(wx * cos - wz * sin, 0, wx * sin + wz * cos);
       }
-
-      // the black hole breathes
-      const s = 130 + Math.sin(t * 0.8) * 6;
-      bh.scale.set(s, s, 1);
 
       renderer.render(scene, camera);
     };
